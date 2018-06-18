@@ -2,30 +2,97 @@
 <html>
   <head>
     <style>
-       #map {
-        height: 400px;
+      html,body {
+        margin: 0;
+        padding: 0;
+        height: 100%;
         width: 100%;
-       }
+      }
+      #map {
+        height: 100%;
+        width: 100%;
+      }
+      #results {
+        width: 80%;
+        margin: 10px 10%;
+        position: absolute;
+        z-index: 1000;
+        padding: 5px;
+      }
     </style>
+    <script type="text/javascript" src="jquery-3.1.1.min.js"></script>
+    <script type="text/javascript" src="papaparse.min.js"></script>
   </head>
   <body>
-    <h3>My Google Maps Demo</h3>
+    <input id="results" />
     <div id="map"></div>
     <script>
+      var isBetween = function(x, a, b) {
+        if (a > b) {
+          var tmp = a;
+          a = b;
+          b = tmp;
+        }
+        return a < x && x < b;
+      };
+      var isBounded = function(x, a, b) {
+        return isBetween(x.latitude, a.latitude, b.latitude) && isBetween(x.longitude, a.longitude, b.longitude);
+      };
+      var normalizeLatLng = function(latLng) {
+        return {latitude: latLng.lat(), longitude: latLng.lng()};
+      }
+      var airports = [];
       function initMap() {
-        var uluru = {lat: -25.363, lng: 131.044};
+        var infoWindow = new google.maps.InfoWindow();
+        var selectStart;
         var map = new google.maps.Map(document.getElementById('map'), {
-          zoom: 4,
-          center: uluru
+          zoom: 2,
+          center: {lat: 0, lng: 0},
         });
-        var marker = new google.maps.Marker({
-          position: uluru,
-          map: map
+        map.addListener('click', function() {
+          infoWindow.close();
+        });
+        map.addListener('rightclick', function(e) {
+          if (selectStart) {
+            $('#results').val(airports.filter(function(a) {
+              return isBounded(a, selectStart, normalizeLatLng(e.latLng));
+            }).map(function(a) {
+              return a.iata_faa;
+            }).join(','));
+            selectStart = undefined;
+          } else {
+            selectStart = normalizeLatLng(e.latLng);
+          }
+        });
+        var csv = Papa.parse("airports2.csv", {
+          download: true,
+          dynamicTyping: true,
+          header: true,
+          skipEmptyLines: true,
+          step: function(r) {
+            //console.log(r);
+            r.data.forEach(function(d) {
+              if (!d.iata_faa || d.type != 'large_airport') {
+                // skip small airports without IATA/FAA
+                return;
+              }
+              airports.push(d);
+              (function(marker) {
+                marker.addListener('click', function() {
+                  infoWindow.setContent(d.iata_faa + ' (' + d.city + ', ' + d.country + ' / ' + d.name + ')');
+                  infoWindow.open(map, marker);
+                });
+              })(new google.maps.Marker({
+                position: {lat: d.latitude, lng: d.longitude},
+                map: map,
+                title: d.iata_faa + ' (' + d.city + ', ' + d.country + ' / ' + d.name + ')',
+              }));
+            });
+          },
+          worker: true,
         });
       }
     </script>
-    <script async defer
-    src="https://maps.googleapis.com/maps/api/js?key=YOUR_API_KEY&callback=initMap">
-    </script>
+    <script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCfu8VowgvVAO2UIetOwAoRv5aKdBdBtV4&callback=initMap"></script>
   </body>
 </html>
