@@ -64,7 +64,7 @@
             selectStart = normalizeLatLng(e.latLng);
           }
         });
-        var csv = Papa.parse("airports2.csv", {
+        var csv = Papa.parse("airports3.csv", {
           download: true,
           dynamicTyping: true,
           header: true,
@@ -72,20 +72,20 @@
           step: function(r) {
             //console.log(r);
             r.data.forEach(function(d) {
-              if (!d.iata_faa || d.type != 'large_airport') {
+              if (!d.iata_code || d.type != 'large_airport') {
                 // skip small airports without IATA/FAA
                 return;
               }
               airports.push(d);
               (function(marker) {
                 marker.addListener('click', function() {
-                  infoWindow.setContent(d.iata_faa + ' (' + d.city + ', ' + d.country + ' / ' + d.name + ')');
+                  infoWindow.setContent(d.iata_code + ' (' + d.municipality + ', ' + d.iso_country + ' / ' + d.name + ')');
                   infoWindow.open(map, marker);
                 });
               })(new google.maps.Marker({
-                position: {lat: d.latitude, lng: d.longitude},
+                position: {lat: d.latitude_deg, lng: d.longitude_deg},
                 map: map,
-                title: d.iata_faa + ' (' + d.city + ', ' + d.country + ' / ' + d.name + ')',
+                title: d.iata_code + ' (' + d.municipality + ', ' + d.iso_country + ' / ' + d.name + ')',
               }));
             });
           },
