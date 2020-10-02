@@ -72,7 +72,7 @@
           step: function(r) {
             //console.log(r);
             r.data.forEach(function(d) {
-              if (!d.iata_code || d.type != 'large_airport') {
+              if (!d.iata_code || d.type != 'large_airport' || d.name.match(/^[^/]*Air ([^\s/]+ )*Base$/)) {
                 // skip small airports without IATA/FAA
                 return;
               }
