@@ -57,7 +57,7 @@
             $('#results').val(airports.filter(function(a) {
               return isBounded(a, selectStart, normalizeLatLng(e.latLng));
             }).map(function(a) {
-              return a.iata_faa;
+              return a.iata_code;
             }).join(','));
             selectStart = undefined;
           } else {
@@ -76,6 +76,7 @@
                 // skip small airports without IATA/FAA
                 return;
               }
+              [d.latitude, d.longitude] = [d.latitude_deg, d.longitude_deg];
               airports.push(d);
               (function(marker) {
                 marker.addListener('click', function() {
